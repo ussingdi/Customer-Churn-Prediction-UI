@@ -139,22 +139,22 @@ def prepare_input(credit_score, location, gender, age, tenure, balance,
 
 def predict(input_df, input_dict):
     probabilities = {
-      'XGBoost': xgboost_model.predict_proba(input_df)[0][1],
-     # 'Random Forest': random_forest_model.predict_proba(input_df)[0][1],
-    #  'Gaussian Naive Bayes ': naive_bayes_model.predict_proba(input_df)[0][1],
-  }
+        'XGBoost': xgboost_model.predict_proba(input_df)[0][1],
+        # 'Random Forest': random_forest_model.predict_proba(input_df)[0][1],
+        # 'Gaussian Naive Bayes ': naive_bayes_model.predict_proba(input_df)[0][1],
+    }
     print(probabilities)
     avg_probability = np.mean(list(probabilities.values()))
 
-    col1,col2=st.columns(2)
+    col1, col2 = st.columns(2, gap="medium")
     with col1:  # First column
         fig = ut.generate_gauge_chart(avg_probability)
-        st.plotly_chart(fig, use_container_width=True,key="gauge_chart")
-        st.write(f"The Customer has a {round(avg_probability*100,1)} % probability of churning")
+        st.plotly_chart(fig, use_container_width=True, key="gauge_chart")
+        st.write(f"The Customer has a {round(avg_probability*100,1)} % probability of churning", key="prob_text")
     with col2:  # Second column
         fig_probs = ut.create_model_proba_chart(probabilities)
-        st.plotly_chart(fig_probs, use_container_width=True,key="model_proba_chart")
-    return avg_probability    
+        st.plotly_chart(fig_probs, use_container_width=True, key="model_proba_chart")
+    return avg_probability
 
 
     
@@ -188,46 +188,54 @@ with col1:
   credit_score = st.number_input("Credit Score",
                                  min_value=300,
                                  max_value=800,
-                                 value=int(selected_customer["CreditScore"]))
+                                 value=int(selected_customer["CreditScore"]),
+                                 key="credit_score_input")
 
-  location = st.selectbox("Location", ["Spain", "France", "Germany"],
-                          index=["Spain", "France", "Germany"
-                                 ].index(selected_customer["Geography"]))
+  location = st.selectbox("Location", 
+                          ["Spain", "France", "Germany"],
+                          index=["Spain", "France", "Germany"].index(selected_customer["Geography"]),
+                          key="location_select")
 
-  gender = st.radio("Gender", ["Male", "Female"],
-                    index=0 if selected_customer["Gender"] == "Male" else 1)
+  gender = st.radio("Gender", 
+                    ["Male", "Female"],
+                    index=0 if selected_customer["Gender"] == "Male" else 1,
+                    key="gender_radio")
 
   age = st.number_input("Age",
                         min_value=18,
                         max_value=100,
-                        value=int(selected_customer["Age"]))
+                        value=int(selected_customer["Age"]),
+                        key="age_input")
 
   tenure = st.number_input("Tenure (years)",
                            min_value=1,
                            max_value=100,
-                           value=int(selected_customer["Tenure"]))
+                           value=int(selected_customer["Tenure"]),
+                           key="tenure_input")
 
 with col2:
   balance = st.number_input("Balance",
                             min_value=0.0,
-                            value=float(selected_customer["Balance"]))
+                            value=float(selected_customer["Balance"]),
+                            key="balance_input")
 
   no_of_products = st.number_input("No. of Products",
                                    min_value=0,
-                                   value=int(
-                                       selected_customer["NumOfProducts"]))
+                                   value=int(selected_customer["NumOfProducts"]),
+                                   key="products_input")
 
   has_credit_card = st.checkbox("Has Credit Card",
-                                value=bool(selected_customer["HasCrCard"]))
+                                value=bool(selected_customer["HasCrCard"]),
+                                key="credit_card_checkbox")
 
   is_active_member = st.checkbox("Is Active Member",
-                                 value=bool(
-                                     selected_customer["IsActiveMember"]))
+                                 value=bool(selected_customer["IsActiveMember"]),
+                                 key="active_member_checkbox")
 
-  estimated_salary = st.number_input("Estimated       Salary",
+  estimated_salary = st.number_input("Estimated Salary",
                                      min_value=0.0,
-                                     value=float(
-                                         selected_customer["EstimatedSalary"]))
+                                     value=float(selected_customer["EstimatedSalary"]),
+                                     key="salary_input")
 
   input_df, input_dict = prepare_input(credit_score, location, gender, age,
                                        tenure, balance, no_of_products,
@@ -235,15 +243,18 @@ with col2:
                                        estimated_salary)
 
 avg_prob = predict(input_df, input_dict)
-avg_prob = predict(input_df, input_dict)
 
-explanation = explain_prediction(round(avg_prob*100,1), input_dict,
-                                   selected_customer['Surname'], df)
-st.markdown("-----------------")
-st.subheader("Explanation of Prediction")
-st.markdown(explanation)
-email = generate_email(avg_prob, input_dict, explanation,
-                         selected_customer['Surname'])
-st.markdown("-----------------")
-st.subheader("Email to Customer")
-st.markdown(email)
+# Add button and conditional display
+if st.button("Generate Analysis", key="generate_button"):
+    with st.spinner("Generating analysis..."):
+        explanation = explain_prediction(round(avg_prob*100,1), input_dict,
+                                      selected_customer['Surname'], df)
+        st.markdown("-----------------")
+        st.subheader("Explanation of Prediction")
+        st.markdown(explanation)
+        
+        email = generate_email(avg_prob, input_dict, explanation,
+                             selected_customer['Surname'])
+        st.markdown("-----------------")
+        st.subheader("Email to Customer")
+        st.markdown(email)
