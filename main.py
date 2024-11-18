@@ -141,12 +141,9 @@ def prepare_input(credit_score, location, gender, age, tenure, balance,
 
 
 def predict(input_df, input_dict, key_suffix=""):
-    print("Uvais Sngdi")
-    print(xgboost_model.predict_proba(input_df)[0][1])
-    print(result2[0])
     probabilities = {
        # 'XGBoost': xgboost_model.predict_proba(input_df)[0][1],
-        'XGBoost': result2[0],
+        'XGBoost': result2,
         'Gaussian Naive Bayes': naive_bayes_model.predict_proba(input_df)[0][1],
         'Random Forest Model': random_forest_model.predict_proba(input_df)[0][1],
 
