@@ -6,9 +6,6 @@ import os
 from openai import OpenAI
 from streamlit.config import set_option
 import utils as ut
-import requests
-import json
-url="https://churn-ml-models-bmdx.onrender.com/predict"
 
 client = OpenAI(base_url="https://api.groq.com/openai/v1",
                 api_key=os.environ['GROQ_API_KEY'])
@@ -64,10 +61,10 @@ def explain_prediction(probability, input_dict, surname, df):
   Your explanation should be concise, insightful, and strictly three sentences.
   """
 
-  #print({round(probability*100),1})
+  print({round(probability*100),1})
 
-
-  #print("EXPLANATION_PROMPT", prompt)
+  
+  print("EXPLANATION_PROMPT", prompt)
 
   raw_response = client.chat.completions.create(
      model="llama-3.2-3b-preview",
@@ -78,7 +75,7 @@ def explain_prediction(probability, input_dict, surname, df):
       }],
   )
   return raw_response.choices[0].message.content
-
+  
 def generate_email(probability, input_dict, explanation, surname):
   prompt = f"""
   You are Manager at ABC Bank. You are responsible for ensuring customers stay with the bank and are incentivized with various offers.
@@ -93,7 +90,7 @@ def generate_email(probability, input_dict, explanation, surname):
 
   Make sure to list out set of incentives to stay based on their information , in bullet point format. Don't ever mention the probability of churning, or the machine learning model to the customer or anything such like your churn risk is low, high , medium or alike.
 
-
+  
   """
 
   raw_response = client.chat.completions.create(
@@ -105,9 +102,9 @@ def generate_email(probability, input_dict, explanation, surname):
       }],
   )
 
-  #print("\n\n Email PROMOPT",prompt)
+  print("\n\n Email PROMOPT",prompt)
   return raw_response.choices[0].message.content
-
+  
 
 def load_model(filename):
   with open(filename, 'rb') as file:
@@ -141,17 +138,12 @@ def prepare_input(credit_score, location, gender, age, tenure, balance,
 
 
 def predict(input_df, input_dict, key_suffix=""):
-    print("Uvais Sngdi")
-    print(xgboost_model.predict_proba(input_df)[0][1])
-    print(result2[0])
     probabilities = {
-       # 'XGBoost': xgboost_model.predict_proba(input_df)[0][1],
-        'XGBoost': result2[0],
-        'Gaussian Naive Bayes': naive_bayes_model.predict_proba(input_df)[0][1],
-        'Random Forest Model': random_forest_model.predict_proba(input_df)[0][1],
-
+        'XGBoost': xgboost_model.predict_proba(input_df)[0][1],
+        'Random Forest': random_forest_model.predict_proba(input_df)[0][1],
+        'Gaussian Naive Bayes ': naive_bayes_model.predict_proba(input_df)[0][1],
     }
-    print("Uvais ",probabilities)
+    print(probabilities)
     avg_probability = np.mean(list(probabilities.values()))
     formatted_prob = "{:.1f}".format(avg_probability * 100)
 
@@ -166,7 +158,7 @@ def predict(input_df, input_dict, key_suffix=""):
     return float(formatted_prob)
 
 
-
+    
 
 
 st.title("Customer Churn Prediction")
@@ -183,17 +175,17 @@ selected_customer_option = st.selectbox("Select a customer", customer_list)
 
 if selected_customer_option:
   selected_customer_id = int(selected_customer_option.split(" - ")[0])
-#  print(selected_customer_id)
+  print(selected_customer_id)
   selected_surname = selected_customer_option.split(" - ")[1]
- # print(selected_surname)
+  print(selected_surname)
 
   selected_customer = df.loc[df["CustomerId"] == selected_customer_id].iloc[0]
-  #print(selected_customer)
+  print(selected_customer)
 
 col1, col2 = st.columns(2)
 
 with col1:
-
+    
   credit_score = st.number_input("Credit Score",
                                  min_value=300,
                                  max_value=800,
@@ -246,32 +238,10 @@ with col2:
                                      value=float(selected_customer["EstimatedSalary"]),
                                      key="salary_input")
 
-  customer_data={
-        "CreditScore": credit_score,
-        "Geography": location,
-        "Gender": gender,
-        "Age": age,
-        "Tenure": tenure,
-        "Balance": balance,
-        "NumOfProducts": no_of_products,
-        "HasCrCard": has_credit_card,
-        "IsActiveMember": is_active_member,
-        "EstimatedSalary": estimated_salary,
-    }
-  response=requests.post(url,json=customer_data)
-
-  if response.status_code==200:
-        result=response.json()
-        result2=result['probabilities']
-        print("success",result)
-  else:
-         print('failed')
-         result2=0
   input_df, input_dict = prepare_input(credit_score, location, gender, age,
-                                           tenure, balance, no_of_products,
-                                           has_credit_card, is_active_member,
-                                           estimated_salary)
-
+                                       tenure, balance, no_of_products,
+                                       has_credit_card, is_active_member,
+                                       estimated_salary)
 
 # Add custom CSS with updated color scheme
 st.markdown(
@@ -317,7 +287,7 @@ if st.session_state.previous_inputs != current_inputs:
     st.session_state.show_email = False
     st.session_state.avg_prob = None
     st.session_state.explanation = None
-
+    
     # Update previous inputs
     st.session_state.previous_inputs = current_inputs
 
@@ -340,7 +310,7 @@ if st.session_state.show_prediction and not st.session_state.avg_prob:
         st.markdown("-----------------")
         st.subheader("Explanation of Prediction")
         st.markdown(st.session_state.explanation)
-
+    
     st.info("👇 Click 'Generate Personalized Email' to create customer email", icon="ℹ️")
 
 # Email button
