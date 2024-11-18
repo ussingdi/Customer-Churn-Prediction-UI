@@ -149,11 +149,11 @@ def predict(input_df, input_dict):
     col1,col2=st.columns(2)
     with col1:  # First column
         fig = ut.generate_gauge_chart(avg_probability)
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, use_container_width=True,key="gauge_chart")
         st.write(f"The Customer has a {round(avg_probability*100,1)} % probability of churning")
     with col2:  # Second column
         fig_probs = ut.create_model_proba_chart(probabilities)
-        st.plotly_chart(fig_probs, use_container_width=True)
+        st.plotly_chart(fig_probs, use_container_width=True,key="model_proba_chart")
     return avg_probability    
 
 
