@@ -6,7 +6,8 @@ import os
 from openai import OpenAI
 from streamlit.config import set_option
 import utils as ut
-
+import requests
+import json
 url="https://churn-ml-models-bmdx.onrender.com/predict"
 
 client = OpenAI(base_url="https://api.groq.com/openai/v1",
@@ -141,8 +142,8 @@ def prepare_input(credit_score, location, gender, age, tenure, balance,
 
 def predict(input_df, input_dict, key_suffix=""):
     probabilities = {
-        'XGBoost': xgboost_model.predict_proba(input_df)[0][1],
-       # 'XGBoost': result2,
+       # 'XGBoost': xgboost_model.predict_proba(input_df)[0][1],
+        'XGBoost': result2,
         'Gaussian Naive Bayes': naive_bayes_model.predict_proba(input_df)[0][1],
         'Random Forest Model': random_forest_model.predict_proba(input_df)[0][1],
 
@@ -242,6 +243,27 @@ with col2:
                                      value=float(selected_customer["EstimatedSalary"]),
                                      key="salary_input")
 
+  customer_data={
+        "CreditScore": credit_score,
+        "Geography": location,
+        "Gender": gender,
+        "Age": age,
+        "Tenure": tenure,
+        "Balance": balance,
+        "NumOfProducts": no_of_products,
+        "HasCrCard": has_credit_card,
+        "IsActiveMember": is_active_member,
+        "EstimatedSalary": estimated_salary,
+    }
+  response=requests.post(url,json=customer_data)
+
+  if response.status_code==200:
+        result=response.json()
+        result2=result['probabilities']
+        print("success",result)
+  else:
+         print('failed')
+         result2=0
   input_df, input_dict = prepare_input(credit_score, location, gender, age,
                                            tenure, balance, no_of_products,
                                            has_credit_card, is_active_member,
