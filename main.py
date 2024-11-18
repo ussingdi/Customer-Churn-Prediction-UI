@@ -113,7 +113,7 @@ def load_model(filename):
 
 xgboost_model = load_model('xgb_model.pkl')
 naive_bayes_model = load_model('nb_model.pkl')
-#random_forest_model = load_model('rf_model.pkl')
+random_forest_model = load_model('rf_model.pkl')
 
 def prepare_input(credit_score, location, gender, age, tenure, balance,
                   num_of_products, has_credit_card, is_active_member,
@@ -140,7 +140,7 @@ def prepare_input(credit_score, location, gender, age, tenure, balance,
 def predict(input_df, input_dict, key_suffix=""):
     probabilities = {
         'XGBoost': xgboost_model.predict_proba(input_df)[0][1],
-        #'Random Forest': random_forest_model.predict_proba(input_df)[0][1],
+        'Random Forest': random_forest_model.predict_proba(input_df)[0][1],
         'Gaussian Naive Bayes ': naive_bayes_model.predict_proba(input_df)[0][1],
     }
     print(probabilities)
@@ -151,7 +151,7 @@ def predict(input_df, input_dict, key_suffix=""):
     with col1:  # First column
         fig = ut.generate_gauge_chart(avg_probability)
         st.plotly_chart(fig, use_container_width=True, key=f"gauge_chart_{key_suffix}")
-        st.write(f"The Customer has a {formatted_prob}% probability of churning", key=f"prob_text_{key_suffix}")
+        st.write(f"The Customer has a {formatted_prob}% probability of churning")
     with col2:  # Second column
         fig_probs = ut.create_model_proba_chart(probabilities)
         st.plotly_chart(fig_probs, use_container_width=True, key=f"model_proba_chart_{key_suffix}")
@@ -244,120 +244,16 @@ with col2:
                                        estimated_salary)
 
 # Add custom CSS with updated color scheme
-st.markdown("""
+st.markdown(
+    """
     <style>
-    /* Main page styling */
-    .main {
-        padding: 20px;
-        background-color: #ffffff;
-    }
-    
-    /* Title styling */
-    .title {
-        color: #FF6B6B;  /* Coral pink */
-        text-align: center;
-        font-size: 42px;
-        font-weight: bold;
-        margin-bottom: 30px;
-        padding: 20px;
-        border-bottom: 2px solid #f0f0f0;
-    }
-    
-    /* Button styling */
-    div.stButton > button {
-        width: 250px;
-        height: 60px;
-        font-size: 20px;
-        font-weight: 500;
-        color: white;
-        background: linear-gradient(to right, #FF6B6B, #FF8E8E);  /* Coral gradient */
-        border-radius: 30px;
-        border: none;
-        box-shadow: 0 4px 6px rgba(255, 107, 107, 0.2);
-        transition: all 0.3s ease;
-    }
-    
-    div.stButton > button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 8px rgba(255, 107, 107, 0.3);
-    }
-    
-    /* Info message styling */
-    .stInfo {
-        background-color: rgba(255, 107, 107, 0.1);
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 5px solid #FF6B6B;
-    }
-    
-    /* Subheader styling */
-    .css-10trblm {
-        color: #FF6B6B;
-        font-size: 24px;
-        margin-top: 30px;
-    }
-    
-    /* Separator styling */
-    hr {
-        margin: 30px 0;
-        border: none;
-        border-top: 2px solid #f0f0f0;
-    }
-    
-    /* Updated footer styling */
-    .footer {
-        background-color: #DCE4C9;
-        color: #FF6B6B;
-        text-align: center;
-        padding: 15px;
-        font-size: 24px;
-        font-style: italic;
-        border-top: 1px solid #f0f0f0;
-        margin-top: 50px;  /* Add space above footer */
-    }
-    
-    /* Add padding to main content to prevent overlap with footer */
-    .main {
-        padding-bottom: 60px;
-    }
-    
-    /* Container styling */
-    .css-1d391kg {
-        padding: 20px;
-        border-radius: 10px;
-        background-color: white;
-        box-shadow: 0 2px 10px rgba(0,0,0,0.03);
-    }
-    
-    /* Spinner styling */
-    .stSpinner > div {
-        border-color: #FF6B6B !important;
-    }
-
-    /* Input fields styling */
-    .stTextInput > div > div > input {
-        border-radius: 8px;
-        border-color: #f0f0f0;
-    }
-    
-    .stTextInput > div > div > input:focus {
-        border-color: #FF6B6B;
-        box-shadow: 0 0 0 1px #FF6B6B;
-    }
-
-    /* Selectbox styling */
-    .stSelectbox > div > div > div {
-        border-radius: 8px;
-        border-color: #f0f0f0;
-    }
-    
-    .stSelectbox > div > div > div:hover {
-        border-color: #FF6B6B;
-    }
+    /* Import the external CSS file */
+    @import url("style.css"); 
     </style>
-""", unsafe_allow_html=True)
-
-# Initialize session state
+    """,
+    unsafe_allow_html=True
+)
+# Initialize all session state variables at the start
 if 'show_prediction' not in st.session_state:
     st.session_state.show_prediction = False
 if 'show_email' not in st.session_state:
@@ -366,9 +262,38 @@ if 'avg_prob' not in st.session_state:
     st.session_state.avg_prob = None
 if 'explanation' not in st.session_state:
     st.session_state.explanation = None
+if 'previous_inputs' not in st.session_state:
+    st.session_state.previous_inputs = None
+
+# After your input collection, create current_inputs dictionary
+current_inputs = {
+    'customer_id': selected_customer_id,
+    'credit_score': credit_score,
+    'location': location,
+    'gender': gender,
+    'age': age,
+    'tenure': tenure,
+    'balance': balance,
+    'no_of_products': no_of_products,
+    'has_credit_card': has_credit_card,
+    'is_active_member': is_active_member,
+    'estimated_salary': estimated_salary
+}
+
+# Check if any input has changed
+if st.session_state.previous_inputs != current_inputs:
+    # Reset all states
+    st.session_state.show_prediction = False
+    st.session_state.show_email = False
+    st.session_state.avg_prob = None
+    st.session_state.explanation = None
+    
+    # Update previous inputs
+    st.session_state.previous_inputs = current_inputs
 
 # Show initial instruction
-st.info("👇 Please click 'Let's Predict and Analyse' to see the prediction results", icon="ℹ️")
+if not st.session_state.show_prediction:
+    st.info("👇 Please click 'Let's Predict and Analyse' to see the prediction results", icon="ℹ️")
 
 # First button for prediction and analysis
 col1, col2, col3 = st.columns([1, 2, 1])
